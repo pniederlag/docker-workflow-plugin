@@ -94,6 +94,24 @@ public class DockerUtilsTest {
         Assert.assertThat(buildArgs.get(key_tag), IsEqual.equalTo(tag));
     }
 
+    @Test public void parseBuildArgsWithDoubleQuotes() throws IOException, InterruptedException {
+        // THIS TEST IS FAILING INTENTIONALLY TO DEMONSTRATE BUG
+        Dockerfile dockerfile = getDockerfileComplexArgs();
+        EnvironmentVariablesNodeProperty prop = new EnvironmentVariablesNodeProperty();
+        EnvVars env = prop.getEnvVars();
+
+        final String json_arg = "EXAMPLE_JSON";
+        final String json_value = "{\"http-basic\":{\"repo.example.org\":{\"username\":\"some-api-user\",\"password\":\"generatedapipasswordorsomeothersecret\"}}}";
+        env.put("EXAMPLE_JSON", json_value);
+        j.jenkins.getGlobalNodeProperties().add(prop);
+        final String commangLine = "docker build -t hello-world --build-arg "+json_arg+"='"+json_value+"'";
+        Map<String, String> buildArgs = DockerUtils.parseBuildArgs(dockerfile, commangLine, env);
+
+        Assert.assertThat(buildArgs.keySet(), IsCollectionWithSize.hasSize(1));
+        Assert.assertThat(buildArgs.keySet(), IsCollectionContaining.hasItems(json_arg));
+        Assert.assertThat(buildArgs.get(json_arg), IsEqual.equalTo(json_value));
+    }
+
     @Test public void parseBuildArgWithKeyAndEqual() throws IOException, InterruptedException {
         final String commangLine = "docker build -t hello-world --build-arg key=";
 
@@ -140,6 +158,9 @@ public class DockerUtilsTest {
         FilePath dockerfilePath = new FilePath(new File("src/test/resources/Dockerfile-defaultArgs"));
         return new Dockerfile(dockerfilePath);
     }
+
+    private Dockerfile getDockerfileComplexArgs() throws IOException, InterruptedException {
+        FilePath dockerfilePath = new FilePath(new File("src/test/resources/Dockerfile-complexArgs"));
+        return new Dockerfile(dockerfilePath);
+    }
 }
-
-

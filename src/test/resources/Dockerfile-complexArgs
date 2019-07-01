@@ -1,0 +1,3 @@
+# Dockerfile with complex (quoted) FROM ARGs
+ARG EXAMPLE_JSON
+FROM hello-world:latest
